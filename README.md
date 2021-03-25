@@ -7,6 +7,31 @@ mmic_ffpa_gmx
 
 MMIC for force field parameter association with GMX
 
+# Snippet
+```python
+
+# Import MMIC schema for FFPA
+from mmic_ffpa.models import AssignInput
+
+# Import MMSchema Molecule
+from mmelemental.models import Molecule
+
+# Import FFPA component with GMX
+from mmic_ffpa_gmx.components import AssignGmxComponent
+
+# Prepare input model
+mol = Molecule.from_file(path_to_file)
+inputs = AssignInput(
+    molecule={"mol": mol}, forcefield={"mol": "amber99"}, engine="gmx"
+)
+
+# Run FF parameter assignment
+outp = AssignGmxComponent.compute(inputs)
+
+# Extract molecule, forcefield (MMSchema) objects
+mol, ff = outp.molecule, outp.forcefield
+```
+
 ### Copyright
 
 Copyright (c) 2021, Andrew Abi-Mansour
