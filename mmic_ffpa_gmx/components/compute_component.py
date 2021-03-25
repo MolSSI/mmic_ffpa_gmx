@@ -9,7 +9,7 @@ from mmic.components.blueprints import SpecificComponent
 
 from typing import Any, Dict, List, Tuple, Optional
 import os
-
+import shutil
 
 _supported_solvents = ("spc", "tip3p", "tip4p")
 
@@ -55,10 +55,20 @@ class ComputeGmxComponent(SpecificComponent):
         assert ff_name == mol_name, "Each molecule must have an assigned FF!"
 
         input_model = {"mol": mol, "ff": ff, "engine": inputs.proc_input.engine}
-        cmd_input = self.build_input(input_model)
-
+        clean_files, cmd_input = self.build_input(input_model)
         rvalue = CmdComponent.compute(cmd_input)
+
+        self.cleanup(clean_files)
+
         return True, self.parse_output(rvalue.dict(), inputs.proc_input)
+
+    @staticmethod
+    def cleanup(remove: List[str]):
+        for item in remove:
+            if os.path.isdir(item):
+                shutil.rmtree(item)
+            elif os.path.isfile(item):
+                os.remove(item)
 
     def build_input(
         self,
@@ -76,10 +86,8 @@ class ComputeGmxComponent(SpecificComponent):
             fp.write(inputs["mol"])
             # input_model["molecule"][mol_name] = fp.abs_path
             mol_fpath = fp.abs_path
-            clean_files.append(fp)
             # Assume FF is supplied by name only? i.e. no FF object to create?
-
-        # input_model = self.build_input(input_model)
+            clean_files.append(mol_fpath)
 
         env = os.environ.copy()
 
@@ -89,7 +97,7 @@ class ComputeGmxComponent(SpecificComponent):
 
         scratch_directory = config.scratch_directory if config else None
 
-        return {
+        return clean_files, {
             "command": [
                 inputs["engine"],
                 "pdb2gmx",
