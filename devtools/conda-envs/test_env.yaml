@@ -1,13 +1,13 @@
 name: test
 channels:
-
   - conda-forge
-
   - defaults
+  - bioconda
 dependencies:
     # Base depends
   - python
   - pip
+  - gromacs
 
     # Testing
   - pytest
