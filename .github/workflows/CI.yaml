@@ -6,11 +6,9 @@ on:
   # Both are tracked here to keep legacy and new codes working
   push:
     branches:
-      - "master"
       - "main"
   pull_request:
     branches:
-      - "master"
       - "main"
   schedule:
     # Nightly tests run on master by default:
@@ -24,7 +22,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [macOS-latest, ubuntu-latest, windows-latest]
+        os: [ubuntu-latest]
         python-version: [3.7, 3.8, 3.9]
 
     steps:
@@ -37,28 +35,34 @@ jobs:
         df -h
         ulimit -a
 
-
     # More info on options: https://github.com/conda-incubator/setup-miniconda
     - uses: conda-incubator/setup-miniconda@v2
       with:
         python-version: ${{ matrix.python-version }}
         environment-file: devtools/conda-envs/test_env.yaml
 
-        channels: conda-forge,defaults
-
         activate-environment: test
         auto-update-conda: false
         auto-activate-base: false
         show-channel-urls: true
 
-    - name: Install package
-
+    - name: Install package & its deps
       # conda setup requires this special shell
       shell: bash -l {0}
       run: |
+        git clone https://github.com/parmed/parmed
+        cd parmed && pip install . && cd .. && rm -rf parmed
+        git clone https://github.com/MolSSI/mmic
+        cd mmic && pip install . && cd .. && rm -rf mmic
+        git clone https://github.com/MolSSI/mmic_translator
+        cd mmic_translator && pip install . && cd .. && rm -rf mmic_translator
+        git clone https://github.com/MolSSI/MMElemental
+        cd MMElemental && pip install . && cd .. && rm -rf MMElemental
+        git clone https://github.com/MolSSI/mmic_parmed
+        cd mmic_parmed && pip install . && cd .. && rm -rf mmic_parmed
+ 
         python -m pip install . --no-deps
         conda list
-
 
     - name: Run tests
 
