@@ -60,6 +60,8 @@ jobs:
         cd MMElemental && pip install . && cd .. && rm -rf MMElemental
         git clone https://github.com/MolSSI/mmic_parmed
         cd mmic_parmed && pip install . && cd .. && rm -rf mmic_parmed
+        git clone https://github.com/MolSSI/mmic_util
+        cd mmic_util && pip install . && cd .. && rm -rf mmic_util
         git clone https://github.com/MolSSI/mmic_ffpa
         cd mmic_ffpa && pip install . && cd .. && rm -rf mmic_ffpa
         python -m pip install . --no-deps
