@@ -97,8 +97,21 @@ class ComputeGmxComponent(SpecificComponent):
 
         scratch_directory = config.scratch_directory if config else None
 
-        return clean_files, {
-            "command": [
+        if inputs["ff"] in _supported_solvents:
+            cmd = [
+                inputs["engine"],
+                "pdb2gmx",
+                "-f",
+                mol_fpath,
+                "-ff",
+                "amber99", # dummy FF because PDB2GMX requires it
+                "-water",
+                inputs["ff"],
+                "-ignh",
+            ]
+            outfiles = ["conf.gro", "topol.top"] # no ext itp file for lib solvents needed
+        else:
+            cmd = [
                 inputs["engine"],
                 "pdb2gmx",
                 "-f",
@@ -107,9 +120,13 @@ class ComputeGmxComponent(SpecificComponent):
                 inputs["ff"],
                 "-water",
                 "none",
-            ],
+            ]
+            outfiles = ["conf.gro", "topol.top", "posre.itp"]
+
+        return clean_files, {
+            "command": cmd,
             "infiles": [mol_fpath],
-            "outfiles": ["conf.gro", "topol.top", "posre.itp"],
+            "outfiles": outfiles,
             "scratch_directory": scratch_directory,
             "environment": env,
         }
@@ -132,6 +149,6 @@ class ComputeGmxComponent(SpecificComponent):
 
         conf = outfiles["conf.gro"]
         top = outfiles["topol.top"]
-        # posre = outfiles['posre.itp']
+        #posre = outfiles["posre.itp"]
 
         return self.output()(proc_input=inputs, molecule=conf, forcefield=top)
