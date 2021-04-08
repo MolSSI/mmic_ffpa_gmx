@@ -2,7 +2,7 @@ from mmic.components.blueprints import SpecificComponent
 from mmelemental.models.util import FileOutput, FileInput
 from mmic_ffpa.models import AssignInput
 from ..models import ComputeGmxInput
-from typing import Dict, Any, List, Tuple, Optional
+from typing import List, Tuple, Optional
 
 
 __all__ = ["PrepGmxComponent"]

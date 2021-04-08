@@ -104,12 +104,15 @@ class ComputeGmxComponent(SpecificComponent):
                 "-f",
                 mol_fpath,
                 "-ff",
-                "amber99", # dummy FF because PDB2GMX requires it
+                "amber99",  # dummy FF because PDB2GMX requires it
                 "-water",
                 inputs["ff"],
                 "-ignh",
             ]
-            outfiles = ["conf.gro", "topol.top"] # no ext itp file for lib solvents needed
+            outfiles = [
+                "conf.gro",
+                "topol.top",
+            ]  # no ext itp file for lib solvents needed
         else:
             cmd = [
                 inputs["engine"],
@@ -149,6 +152,12 @@ class ComputeGmxComponent(SpecificComponent):
 
         conf = outfiles["conf.gro"]
         top = outfiles["topol.top"]
-        #posre = outfiles["posre.itp"]
+        # posre = outfiles["posre.itp"]
 
-        return self.output()(proc_input=inputs, molecule=conf, forcefield=top)
+        return self.output()(
+            proc_input=inputs,
+            molecule=conf,
+            forcefield=top,
+            stdout=stdout,
+            stderr=stderr,
+        )

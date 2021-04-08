@@ -1,7 +1,7 @@
 from mmelemental.models import ProcInput
 from mmic_ffpa.models import AssignInput
 from pydantic import Field
-from typing import Optional, Dict, Union
+from typing import Dict
 
 __all__ = ["ComputeGmxInput"]
 
