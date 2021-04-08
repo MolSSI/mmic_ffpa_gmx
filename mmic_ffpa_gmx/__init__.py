@@ -4,7 +4,6 @@ MMIC for force field parameter association with GMX
 """
 
 # Add imports here
-from .mmic_ffpa_gmx import *
 from .models import *
 from .components import *
 from . import models
