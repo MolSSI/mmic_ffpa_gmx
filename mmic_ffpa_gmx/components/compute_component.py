@@ -130,6 +130,7 @@ class ComputeGmxComponent(SpecificComponent):
             "command": cmd,
             "infiles": [mol_fpath],
             "outfiles": outfiles,
+            "outfiles_load": True,
             "scratch_directory": scratch_directory,
             "environment": env,
         }
