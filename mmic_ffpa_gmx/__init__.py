@@ -19,3 +19,4 @@ del get_versions, versions
 
 # Main component for running FFPA
 runComponent = components.ffpa_component.AssignGmxComponent
+engine = "gmx"
