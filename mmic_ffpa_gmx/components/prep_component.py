@@ -1,5 +1,6 @@
 from mmic.components.blueprints import SpecificComponent
 from mmelemental.models.util import FileOutput, FileInput
+from mmelemental.util.files import random_file
 from mmic_ffpa.models import AssignInput
 from ..models import ComputeGmxInput
 from typing import List, Tuple, Optional
@@ -33,7 +34,7 @@ class PrepGmxComponent(SpecificComponent):
 
         mols = {}
         for name, mol in inputs.molecule.items():
-            fname = FileOutput.rand_name() + ".pdb"
+            fname = random_file(suffix=".gro")
             mol.to_file(fname)
 
             with FileInput(path=fname) as fp:
