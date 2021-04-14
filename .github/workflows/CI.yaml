@@ -66,6 +66,8 @@ jobs:
         cd mmic_util && pip install . && cd .. && rm -rf mmic_util
         git clone https://github.com/MolSSI/mmic_ffpa
         cd mmic_ffpa && pip install . && cd .. && rm -rf mmic_ffpa
+        git clone https://github.com/MolSSI/mm_data
+        cd mm_data && pip install . && cd .. && rm -rf mm_data
         python -m pip install . --no-deps
         conda list
 
