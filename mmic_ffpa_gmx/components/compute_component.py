@@ -1,5 +1,6 @@
 # Import models
-from mmelemental.models.util.output import FileOutput
+from mmelemental.models.util import FileOutput
+from mmelemental.util.files import random_file
 from ..models import ComputeGmxInput, ComputeGmxOutput
 
 # Import components
@@ -49,18 +50,23 @@ class ComputeGmxComponent(SpecificComponent):
         if len(mols) > 1:
             raise NotImplementedError("Only a single molecule supported for now.")
 
+        # For now only a single molecule supported ~ hackish
+        # TODO: improve this
         ff_name, ff = list(ffs.items()).pop()
         mol_name, mol = list(mols.items()).pop()
 
         assert ff_name == mol_name, "Each molecule must have an assigned FF!"
 
-        input_model = {"mol": mol, "ff": ff, "engine": inputs.proc_input.engine}
+        input_model = {"mol": mol, "ff": ff, "proc_input": inputs.proc_input}
         clean_files, cmd_input = self.build_input(input_model)
         rvalue = CmdComponent.compute(cmd_input)
 
         self.cleanup(clean_files)
 
-        return True, self.parse_output(rvalue.dict(), inputs.proc_input)
+        return True, self.parse_output(
+            rvalue.dict(),
+            inputs.proc_input,
+        )
 
     @staticmethod
     def cleanup(remove: List[str]):
@@ -77,9 +83,9 @@ class ComputeGmxComponent(SpecificComponent):
         template: Optional[str] = None,
     ) -> Dict[str, Any]:
 
-        assert inputs["engine"] == "gmx", "Engine must be gmx (Gromacs)!"
+        assert inputs["proc_input"].engine == "gmx", "Engine must be gmx (Gromacs)!"
 
-        fname = FileOutput.rand_name() + ".pdb"
+        fname = random_file(suffix=".gro")
         clean_files = []
 
         with FileOutput(path=fname) as fp:
@@ -96,10 +102,13 @@ class ComputeGmxComponent(SpecificComponent):
             env["OMP_NUM_THREADS"] = str(config.ncores)
 
         scratch_directory = config.scratch_directory if config else None
+        gro_file = random_file(suffix=".gro")
+        top_file = random_file(suffix=".top")
+        itp_file = random_file(suffix=".itp")
 
         if inputs["ff"] in _supported_solvents:
             cmd = [
-                inputs["engine"],
+                inputs["proc_input"].engine,
                 "pdb2gmx",
                 "-f",
                 mol_fpath,
@@ -107,15 +116,18 @@ class ComputeGmxComponent(SpecificComponent):
                 "amber99",  # dummy FF because PDB2GMX requires it
                 "-water",
                 inputs["ff"],
-                "-ignh",
+                "-o",
+                gro_file,
+                "-p",
+                top_file,
             ]
             outfiles = [
-                "conf.gro",
-                "topol.top",
-            ]  # no ext itp file for lib solvents needed
+                gro_file,
+                top_file,
+            ]  # ext itp file is NOT generated for library-def solvents
         else:
             cmd = [
-                inputs["engine"],
+                inputs["proc_input"].engine,
                 "pdb2gmx",
                 "-f",
                 mol_fpath,
@@ -123,8 +135,22 @@ class ComputeGmxComponent(SpecificComponent):
                 inputs["ff"],
                 "-water",
                 "none",
+                "-o",
+                gro_file,
+                "-p",
+                top_file,
+                "-i",
+                itp_file,
             ]
-            outfiles = ["conf.gro", "topol.top", "posre.itp"]
+            outfiles = [gro_file, top_file, itp_file]
+
+        # Additional args to pdb2gmx e.g. -ignh, -dist float, etc. parsed here
+        if inputs["proc_input"].kwargs:
+            for key, val in inputs["proc_input"].kwargs.items():
+                if val:
+                    cmd.extend([key, val])
+                else:
+                    cmd.extend([key])
 
         return clean_files, {
             "command": cmd,
@@ -142,18 +168,16 @@ class ComputeGmxComponent(SpecificComponent):
         stderr = output["stderr"]
         outfiles = output["outfiles"]
 
-        if stderr:
-            # Supress stderro for now because
-            # stupid GMX prints pdb2gmx output to stderr
-            # See https://redmine.gromacs.org/issues/2211
-            if output.get("Debug"):
-                print("Error from {engine}:".format(**inputs))
-                print("=========================")
-                raise RuntimeError(stderr)
-
-        conf = outfiles["conf.gro"]
-        top = outfiles["topol.top"]
-        # posre = outfiles["posre.itp"]
+        # I think order in util.execute matters. For a more rigorous imp, we need 
+        # to pass the conf, top, etc. filenames
+        if len(outfiles) == 3:
+            conf, top, _ = outfiles.values()  # posre = outfiles["posre.itp"]
+        elif len(outfiles) == 2:
+            conf, top = outfiles.values()
+        else:
+            raise ValueError(
+                "The number of output files should be either 2 (.gro, .top) or 3 (.gro, .top, .itp)"
+            )
 
         return self.output()(
             proc_input=inputs,
