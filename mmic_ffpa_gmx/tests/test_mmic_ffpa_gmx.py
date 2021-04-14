@@ -11,6 +11,7 @@ from mmic_ffpa_gmx.components import (
 )
 from mmic_ffpa.models import AssignInput
 from mmelemental.models import Molecule
+import mm_data
 
 import mmic_ffpa_gmx
 import pytest
@@ -24,7 +25,7 @@ def test_mmic_ffpa_gmx_imported():
 
 
 def test_mmic_ffpa_sub():
-    mfile = os.path.join("mmic_ffpa_gmx", "data", "molecules", "dialanine.gro")
+    mfile = mm_data.mols["dialanine.pdb"]
     mol = Molecule.from_file(mfile)
     inputs = AssignInput(
         molecule={"mol": mol}, forcefield={"mol": "amber99"}, engine="gmx"
@@ -34,12 +35,15 @@ def test_mmic_ffpa_sub():
     outp = PostGmxComponent.compute(computeOutput)
     mol, ff = outp.molecule, outp.forcefield
 
-
-def test_mmic_ffpa_main():
-    mfile = os.path.join("mmic_ffpa_gmx", "data", "molecules", "dialanine.gro")
+@pytest.mark.parametrize("mol_file", ["alanine.gro", "1dzl_fixed.gro"])
+def test_mmic_ffpa_main(mol_file):
+    mfile = mm_data.mols[mol_file]
     mol = Molecule.from_file(mfile)
     inputs = AssignInput(
-        molecule={"mol": mol}, forcefield={"mol": "amber99"}, engine="gmx"
+        molecule={"mol": mol},
+        forcefield={"mol": "amber99"},
+        engine="gmx",
+        kwargs={"-ignh": ""},
     )
     outp = AssignGmxComponent.compute(inputs)
     mol, ff = outp.molecule, outp.forcefield
