@@ -4,6 +4,7 @@ from mmic.components.blueprints import SpecificComponent
 # Import models
 from mmelemental.models.util.output import FileOutput
 from mmelemental.models import Molecule, ForceField
+from mmelemental.util.files import random_file
 from mmic_ffpa.models import AssignOutput
 from ..models import ComputeGmxOutput
 
@@ -35,8 +36,9 @@ class PostGmxComponent(SpecificComponent):
             inputs = self.input()(**inputs)
 
         ff, mol = inputs.forcefield, inputs.molecule
-        mol_name = FileOutput.rand_name() + ".gro"
-        ff_name = FileOutput.rand_name() + ".top"
+
+        mol_name = random_file(suffix=".gro")
+        ff_name = random_file(suffix=".top")
 
         with FileOutput(path=mol_name, clean=True) as fp:
             fp.write(mol)
