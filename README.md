@@ -5,7 +5,7 @@ mmic_ffpa_gmx
 [![codecov](https://codecov.io/gh/MolSSI/mmic_ffpa_gmx/branch/main/graph/badge.svg)](https://codecov.io/gh/MolSSI/mmic_ffpa_gmx/branch/main)
 [![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/MolSSI/mmic_ffpa_gmx.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/MolSSI/mmic_ffpa_gmx/context:python)
 
-MMIC for force field parameter association with GMX
+MMIC for force field parameter assignment with GMX
 
 # Snippet
 ```python
