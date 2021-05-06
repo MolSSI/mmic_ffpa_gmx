@@ -4,8 +4,6 @@ MMIC for force field parameter association with GMX
 """
 
 # Add imports here
-from .models import *
-from .components import *
 from . import models
 from . import components
 
@@ -18,5 +16,4 @@ __git_revision__ = versions["full-revisionid"]
 del get_versions, versions
 
 # Main component for running FFPA
-runComponent = components.ffpa_component.AssignGmxComponent
-engine = "gmx"
+from .components.ffpa_component import AssignGmxComponent as RunComponent
