@@ -1,5 +1,5 @@
 # Import components
-from mmic.components.blueprints import SpecificComponent
+from mmic.components.blueprints import GenericComponent
 
 # Import models
 from mmelemental.models.util.output import FileOutput
@@ -8,13 +8,14 @@ from mmelemental.util.files import random_file
 from mmic_ffpa.models import AssignOutput
 from ..models import ComputeGmxOutput
 
+import cmselemental
 from typing import Dict, Any, List, Tuple, Optional
 
 
 __all__ = ["PostGmxComponent"]
 
 
-class PostGmxComponent(SpecificComponent):
+class PostGmxComponent(GenericComponent):
     @classmethod
     def input(cls):
         return ComputeGmxOutput
@@ -51,8 +52,13 @@ class PostGmxComponent(SpecificComponent):
         if len(mol_name) > 1:
             raise NotImplementedError("Only a single molecule supported for now")
         mol_name = mol_name.pop()
-        return True, self.output()(
+        output = self.output()(
             proc_input=inputs.proc_input,
             molecule={mol_name: mol},
             forcefield={mol_name: ff},
+            success=True,
+            provenance=cmselemental.extras.provenance_stamp(
+                routine=__name__, creator="mmic_ffpa_gmx"
+            ),
         )
+        return output.success, output
