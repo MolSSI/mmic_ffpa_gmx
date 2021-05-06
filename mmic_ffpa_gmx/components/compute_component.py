@@ -4,21 +4,23 @@ from mmelemental.util.files import random_file
 from ..models import ComputeGmxInput, ComputeGmxOutput
 
 # Import components
-from mmic_util.components import CmdComponent
-from mmic.components.blueprints import SpecificComponent
+from mmic_cmd.components import CmdComponent
+from mmic.components.blueprints import GenericComponent
 
-
+# General utils
+import cmselemental
 from typing import Any, Dict, List, Tuple, Optional
 import os
 import shutil
 
+_supported_engines = {"gmx": "pdb2gmx", "gmx_mpi": "pdb2gmx", "pdb2gmx": ...}
 _supported_solvents = ("spc", "tip3p", "tip4p")
 
 __all__ = ["ComputeGmxComponent"]
 
 
-class ComputeGmxComponent(SpecificComponent):
-    """ A component for generating a pramaterized molecule. """
+class ComputeGmxComponent(GenericComponent):
+    """A component for generating a pramaterized molecule."""
 
     @classmethod
     def input(cls):
@@ -59,6 +61,8 @@ class ComputeGmxComponent(SpecificComponent):
 
         input_model = {"mol": mol, "ff": ff, "proc_input": inputs.proc_input}
         clean_files, cmd_input = self.build_input(input_model)
+
+        print("cmd_input = ", cmd_input["command"])
         rvalue = CmdComponent.compute(cmd_input)
 
         self.cleanup(clean_files)
@@ -83,7 +87,9 @@ class ComputeGmxComponent(SpecificComponent):
         template: Optional[str] = None,
     ) -> Dict[str, Any]:
 
-        assert inputs["proc_input"].engine == "gmx", "Engine must be gmx (Gromacs)!"
+        assert (
+            inputs["proc_input"].engine in _supported_engines
+        ), "Engine must be gmx (Gromacs)!"
 
         fname = random_file(suffix=".gro")
         clean_files = []
@@ -106,48 +112,53 @@ class ComputeGmxComponent(SpecificComponent):
         top_file = random_file(suffix=".top")
         itp_file = random_file(suffix=".itp")
 
+        for eng, subeng in _supported_engines.items():
+            if cmselemental.util.importing.which(eng):
+                cmd = [eng, subeng] if subeng is not Ellipsis else [eng]
+                break
+
         if inputs["ff"] in _supported_solvents:
-            cmd = [
-                inputs["proc_input"].engine,
-                "pdb2gmx",
-                "-f",
-                mol_fpath,
-                "-ff",
-                "amber99",  # dummy FF because PDB2GMX requires it
-                "-water",
-                inputs["ff"],
-                "-o",
-                gro_file,
-                "-p",
-                top_file,
-            ]
+            cmd.extend(
+                [
+                    "-f",
+                    mol_fpath,
+                    "-ff",
+                    "amber99",  # dummy FF because PDB2GMX requires it
+                    "-water",
+                    inputs["ff"],
+                    "-o",
+                    gro_file,
+                    "-p",
+                    top_file,
+                ]
+            )
             outfiles = [
                 gro_file,
                 top_file,
             ]  # ext itp file is NOT generated for library-def solvents
         else:
-            cmd = [
-                inputs["proc_input"].engine,
-                "pdb2gmx",
-                "-f",
-                mol_fpath,
-                "-ff",
-                inputs["ff"],
-                "-water",
-                "none",
-                "-o",
-                gro_file,
-                "-p",
-                top_file,
-                "-i",
-                itp_file,
-            ]
+            cmd.extend(
+                [
+                    "-f",
+                    mol_fpath,
+                    "-ff",
+                    inputs["ff"],
+                    "-water",
+                    "none",
+                    "-o",
+                    gro_file,
+                    "-p",
+                    top_file,
+                    "-i",
+                    itp_file,
+                ]
+            )
             outfiles = [gro_file, top_file, itp_file]
 
         # Additional args to pdb2gmx e.g. -ignh, -dist float, etc. parsed here
-        if inputs["proc_input"].kwargs:
-            for key, val in inputs["proc_input"].kwargs.items():
-                if val:
+        if inputs["proc_input"].keywords:
+            for key, val in inputs["proc_input"].keywords.items():
+                if val is not None and val is not Ellipsis:
                     cmd.extend([key, val])
                 else:
                     cmd.extend([key])
@@ -156,7 +167,6 @@ class ComputeGmxComponent(SpecificComponent):
             "command": cmd,
             "infiles": [mol_fpath],
             "outfiles": outfiles,
-            "outfiles_load": True,
             "scratch_directory": scratch_directory,
             "environment": env,
         }
@@ -168,7 +178,7 @@ class ComputeGmxComponent(SpecificComponent):
         stderr = output["stderr"]
         outfiles = output["outfiles"]
 
-        # I think order in util.execute matters. For a more rigorous imp, we need 
+        # I think order in util.execute matters. For a more rigorous imp, we need
         # to pass the conf, top, etc. filenames
         if len(outfiles) == 3:
             conf, top, _ = outfiles.values()  # posre = outfiles["posre.itp"]
