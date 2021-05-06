@@ -1,4 +1,4 @@
-from mmic.components.blueprints import SpecificComponent
+from mmic.components.blueprints import GenericComponent
 from mmelemental.models.util import FileOutput, FileInput
 from mmelemental.util.files import random_file
 from mmic_ffpa.models import AssignInput
@@ -9,8 +9,8 @@ from typing import List, Tuple, Optional
 __all__ = ["PrepGmxComponent"]
 
 
-class PrepGmxComponent(SpecificComponent):
-    """ A component for converting AssignInput object to ComputeInput. """
+class PrepGmxComponent(GenericComponent):
+    """A component for converting AssignInput object to ComputeInput."""
 
     @classmethod
     def input(cls):
