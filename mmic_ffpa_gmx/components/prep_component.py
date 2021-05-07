@@ -1,5 +1,5 @@
 from mmic.components.blueprints import GenericComponent
-from mmelemental.models.util import FileOutput, FileInput
+from mmelemental.models.util import FileInput
 from mmelemental.util.files import random_file
 from mmic_ffpa.models import AssignInput
 from ..models import ComputeGmxInput
