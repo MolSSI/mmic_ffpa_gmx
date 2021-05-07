@@ -16,7 +16,6 @@ dependencies:
 
     # Pip-only installs
   - pip:
-    - codecov
     - pydantic
     - git+https://github.com/andrew-abimansour/qcengine.git@execute
     - git+https://github.com/MolSSI/cmselemental.git@dev
