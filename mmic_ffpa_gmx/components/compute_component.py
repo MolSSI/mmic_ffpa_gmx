@@ -62,7 +62,6 @@ class ComputeGmxComponent(GenericComponent):
         input_model = {"mol": mol, "ff": ff, "proc_input": inputs.proc_input}
         clean_files, cmd_input = self.build_input(input_model)
 
-        print("cmd_input = ", cmd_input["command"])
         rvalue = CmdComponent.compute(cmd_input)
 
         self.cleanup(clean_files)
